@@ -1,6 +1,7 @@
 package com.company.enroller.persistence;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
@@ -22,6 +23,23 @@ public class ParticipantService {
 		Query query = connector.getSession().createQuery(hql);
 		return query.list();
 	}
+
+    public Collection<Participant> getAll(Optional<String> sortBy, Optional<String> sortOrder, Optional<String> key) {
+        String hql = "FROM Participant p ";
+        if (key.isPresent()) {
+            hql += "WHERE p.login LIKE %" + key.get() + "% ";
+        }
+
+        if (sortBy.isPresent()) {
+            String order = sortOrder.map(String::toUpperCase)
+                    .filter(o -> o.equals("ASC") || o.equals("DESC"))
+                    .orElse("ASC");
+            hql += "ORDER BY p." + sortBy.get() + " " + order;
+        }
+
+        Query<Participant> query = connector.getSession().createQuery(hql, Participant.class);
+        return query.list();
+    }
 
     public Participant findByLogin(String login) {
         String hql = "FROM Participant WHERE login = :login";
