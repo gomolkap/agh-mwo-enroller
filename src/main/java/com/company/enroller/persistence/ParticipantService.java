@@ -12,32 +12,39 @@ import com.company.enroller.model.Participant;
 @Component("participantService")
 public class ParticipantService {
 
-	DatabaseConnector connector;
+    DatabaseConnector connector;
 
-	public ParticipantService() {
-		connector = DatabaseConnector.getInstance();
-	}
+    public ParticipantService() {
+        connector = DatabaseConnector.getInstance();
+    }
 
-	public Collection<Participant> getAll() {
-		String hql = "FROM Participant";
-		Query query = connector.getSession().createQuery(hql);
-		return query.list();
-	}
+    public Collection<Participant> getAll() {
+        String hql = "FROM Participant";
+        Query query = connector.getSession().createQuery(hql);
+        return query.list();
+    }
 
     public Collection<Participant> getAll(Optional<String> sortBy, Optional<String> sortOrder, Optional<String> key) {
         String hql = "FROM Participant p ";
+
         if (key.isPresent()) {
-            hql += "WHERE p.login LIKE %" + key.get() + "% ";
+            hql += "WHERE p.login LIKE :key ";
         }
 
-        if (sortBy.isPresent()) {
+        if (sortBy.isPresent() && sortBy.get().equals("login")) {
             String order = sortOrder.map(String::toUpperCase)
                     .filter(o -> o.equals("ASC") || o.equals("DESC"))
                     .orElse("ASC");
-            hql += "ORDER BY p." + sortBy.get() + " " + order;
+
+            hql += "ORDER BY p.login " + order;
         }
 
         Query<Participant> query = connector.getSession().createQuery(hql, Participant.class);
+
+        if (key.isPresent()) {
+            query.setParameter("key", "%" + key.get() + "%");
+        }
+
         return query.list();
     }
 

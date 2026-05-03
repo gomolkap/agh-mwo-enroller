@@ -19,6 +19,9 @@ public class MeetingRestController {
     @Autowired
     MeetingService meetingService;
 
+    @Autowired
+    ParticipantService participantService;
+
     @RequestMapping(value = "", method = RequestMethod.GET)
     public ResponseEntity<?> getMeeting() {
         Collection<Meeting> meetings = meetingService.getAll();
@@ -64,6 +67,51 @@ public class MeetingRestController {
         foundMeeting.setDescription(meeting.getDescription());
         foundMeeting.setDate(meeting.getDate());
         meetingService.update(foundMeeting);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}/participants")
+    public ResponseEntity<?> getParticipants(@PathVariable Long id) {
+        Meeting meeting = meetingService.findById(id);
+        if (meeting == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(meeting.getParticipants(), HttpStatus.OK);
+    }
+
+    @PostMapping("/{id}/participants")
+    public ResponseEntity<?> addParticipant(
+            @PathVariable Long id,
+            @RequestParam String login) {
+
+        Meeting meeting = meetingService.findById(id);
+        Participant participant = participantService.findByLogin(login);
+
+        if (meeting == null || participant == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        meeting.addParticipant(participant);
+        meetingService.update(meeting);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}/participants/{login}")
+    public ResponseEntity<?> removeParticipant(
+            @PathVariable Long id,
+            @PathVariable String login) {
+
+        Meeting meeting = meetingService.findById(id);
+        Participant participant = participantService.findByLogin(login);
+
+        if (meeting == null || participant == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        meeting.removeParticipant(participant);
+        meetingService.update(meeting);
+
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }
